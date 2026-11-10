@@ -72,6 +72,15 @@
   .opt.sel{background:var(--cream);color:var(--navy);border-color:var(--cream)}
   .opt.sel .dot{border-color:var(--navy);background:var(--navy);box-shadow:inset 0 0 0 3px var(--cream)}
 
+  .opt small{margin-left:auto;font-size:14px;opacity:.75}
+  .opt.sel small{opacity:.85}
+  .note{
+    border:1px solid var(--copper);background:rgba(201,138,90,.14);border-radius:14px;
+    padding:14px 16px;font-size:16px;line-height:1.45;text-align:center;margin-bottom:22px;color:var(--cream);
+  }
+  .note b{color:#e8b48a;font-weight:700}
+  .step[data-key="espera"] h1{margin-bottom:24px}
+
   textarea{
     width:100%;min-height:130px;resize:none;border-radius:14px;border:1px solid var(--line);
     background:rgba(255,246,224,.06);color:var(--cream);font:inherit;font-size:16px;padding:16px;outline:none;
@@ -98,10 +107,6 @@
   .thanks{text-align:center}
   .thanks h1{margin-bottom:14px}
   .thanks p{color:var(--cream-dim);font-size:16px;line-height:1.5}
-  .review{display:none;margin-top:30px;padding-top:26px;border-top:1px solid var(--line)}
-  .review.show{display:block}
-  .review p{color:var(--cream)}
-  .stars{font-size:22px;letter-spacing:6px;margin:6px 0 2px;color:var(--copper)}
 
   footer{padding:14px 0 18px;font-size:11px;letter-spacing:.2em;color:var(--cream-dim);text-transform:uppercase}
 </style>
@@ -132,11 +137,12 @@
   <!-- 3 Espera -->
   <section class="step" data-key="espera" data-type="opt">
     <p class="eyebrow">3 de 5</p>
+    <div class="note"><b>Tené en cuenta:</b> los cortes a la parrilla se hacen en el momento y llevan entre 25 y 40 minutos.</div>
     <h1>¿Cómo estuvo el tiempo de espera?</h1>
     <div class="opts">
-      <button class="opt" data-v="Rápido"><span class="dot"></span>Rápido</button>
-      <button class="opt" data-v="Normal"><span class="dot"></span>Normal</button>
-      <button class="opt" data-v="Demoró bastante"><span class="dot"></span>Demoró bastante</button>
+      <button class="opt" data-v="Rápido (hasta 20 min)"><span class="dot"></span>Rápido<small>hasta 20 min</small></button>
+      <button class="opt" data-v="Normal (20 a 30 min)"><span class="dot"></span>Normal<small>20 a 30 min</small></button>
+      <button class="opt" data-v="Demoró (más de 30 min)"><span class="dot"></span>Demoró<small>más de 30 min</small></button>
     </div>
   </section>
 
@@ -160,12 +166,6 @@
     <p class="eyebrow">Listo</p>
     <h1>¡Gracias por tu tiempo!</h1>
     <p>Tu opinión nos ayuda a mejorar cada día.<br>Te esperamos pronto.</p>
-    <div class="review" id="review">
-      <div class="stars">★★★★★</div>
-      <p>¿Nos ayudás con una reseña en Google?<br>Son 30 segundos y nos suma muchísimo.</p>
-      <a class="btn" style="display:block;text-decoration:none" target="_blank" rel="noopener"
-         href="https://search.google.com/local/writereview?placeid=ChIJJR9J74NTtpURDlbMTlSCDao">Dejar reseña</a>
-    </div>
   </section>
 
   <button class="back" id="back">← Volver</button>
@@ -235,7 +235,6 @@
           headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(data)});
       } else { console.log('Modo prueba, respuesta:', data); }
     }catch(err){ console.warn(err); }
-    if((data.comida>=4) && (data.atencion>=4)) document.getElementById('review').classList.add('show');
     go(5);
   });
 
