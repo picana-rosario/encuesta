@@ -236,11 +236,16 @@
     const btn = e.currentTarget; btn.disabled = true; btn.textContent = 'Enviando…';
     data.comentario = document.getElementById('comentario').value.trim();
     data.mesa = mesa;
+    // Cuántas veces se envió la encuesta desde este celular/navegador (incluye este envío)
+    let envios = 1;
+    try{ envios = (parseInt(localStorage.getItem('picania_envios'),10) || 0) + 1; }catch(_){}
+    data.envios = envios;
     try{
       if(SCRIPT_URL){
         await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors',
           headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(data)});
       } else { console.log('Modo prueba, respuesta:', data); }
+      try{ localStorage.setItem('picania_envios', String(envios)); }catch(_){}
     }catch(err){ console.warn(err); }
     go(5);
   });
