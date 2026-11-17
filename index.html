@@ -114,6 +114,19 @@
   .thanks h1{margin-bottom:14px}
   .thanks p{color:var(--cream-dim);font-size:16px;line-height:1.5}
 
+  /* contacto (solo si hubo una respuesta negativa) */
+  .lead{color:var(--cream-dim);font-size:16px;line-height:1.5;text-align:center;margin:-18px 0 22px}
+  .field{display:block;margin-bottom:12px}
+  .field span{display:block;font-size:13px;color:var(--cream-dim);margin:0 0 6px 4px}
+  .field input{
+    width:100%;padding:16px;border-radius:14px;border:1px solid var(--line);
+    background:rgba(255,246,224,.06);color:var(--cream);font:inherit;font-size:16px;outline:none;
+  }
+  .field input::placeholder{color:var(--cream-dim)}
+  .field input:focus{border-color:var(--cream-dim)}
+  .privacy{font-size:12.5px;color:var(--cream-dim);text-align:center;line-height:1.45;margin-top:4px}
+  .step[data-key="contacto"] .btn{margin-top:16px}
+
   footer{padding:14px 0 18px;font-size:11px;letter-spacing:.2em;color:var(--cream-dim);text-transform:uppercase}
 </style>
 </head>
@@ -167,11 +180,27 @@
     <button class="btn" id="send">Enviar</button>
   </section>
 
+  <!-- Contacto: aparece solo si alguna puntuación fue 1, 2 o 3, o si la espera fue "Demoró" -->
+  <section class="step" data-key="contacto" id="contacto">
+    <p class="eyebrow">Una cosa más</p>
+    <h1>Lamentamos que tu experiencia no haya sido la que esperabas</h1>
+    <p class="lead">¿Te gustaría que alguien del equipo se comunique con vos?</p>
+    <label class="field"><span>Nombre</span>
+      <input id="cNombre" type="text" autocomplete="name" maxlength="60" placeholder="Tu nombre">
+    </label>
+    <label class="field"><span>WhatsApp</span>
+      <input id="cTel" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="Ej: 341 555-1234">
+    </label>
+    <p class="privacy">Usaremos tus datos solo para contactarte por esta visita.</p>
+    <button class="btn" id="cSi" disabled>Sí, contáctenme</button>
+    <button class="btn ghost" id="cNo">No, gracias</button>
+  </section>
+
   <!-- Gracias -->
   <section class="step thanks" id="thanks">
     <p class="eyebrow">Listo</p>
-    <h1>¡Gracias por tu tiempo!</h1>
-    <p>Tu opinión nos ayuda a mejorar cada día.<br>Te esperamos pronto.</p>
+    <h1 id="thanksTitle">¡Gracias por tu tiempo!</h1>
+    <p id="thanksText">Tu opinión nos ayuda a mejorar cada día.<br>Te esperamos pronto.</p>
   </section>
 
   <button class="back" id="back">← Volver</button>
@@ -203,6 +232,9 @@
   const back = document.getElementById('back');
   const data = {};
   let cur = 0, locked = false;
+  const COMENTARIO = steps.findIndex(s=>s.dataset.key==='comentario');
+  const CONTACTO   = steps.findIndex(s=>s.id==='contacto');
+  const THANKS     = steps.findIndex(s=>s.id==='thanks');
 
   function go(i){
     steps[cur].classList.remove('active');
@@ -211,9 +243,16 @@
     steps[cur].classList.remove('left');
     steps[cur].classList.add('active');
     bars.forEach((b,k)=>b.classList.toggle('on', k<=cur));
-    back.classList.toggle('show', cur>0 && cur<5);
-    document.getElementById('progress').style.visibility = cur===5 ? 'hidden':'visible';
-    if(cur===5){ const ll=document.getElementById('logoLink'); ll.href='https://picania-rosario.github.io/picania.github.io/'; ll.classList.add('on'); }
+    back.classList.toggle('show', cur>0 && cur<THANKS);
+    document.getElementById('progress').style.visibility = cur===THANKS ? 'hidden':'visible';
+    if(cur===THANKS){ const ll=document.getElementById('logoLink'); ll.href='https://picania-rosario.github.io/picania.github.io/'; ll.classList.add('on'); }
+  }
+
+  // Respuesta negativa: alguna carita en 1, 2 o 3, o espera "Demoró"
+  function esNegativa(){
+    const bajas = ['comida','atencion','ambiente'].some(k=>typeof data[k]==='number' && data[k]<=3);
+    const demora = String(data.espera||'').startsWith('Demor');
+    return bajas || demora;
   }
 
   steps.slice(0,4).forEach((st,i)=>{
@@ -232,9 +271,42 @@
 
   const mesa = new URLSearchParams(location.search).get('mesa') || '';
 
-  document.getElementById('send').addEventListener('click', async (e)=>{
-    const btn = e.currentTarget; btn.disabled = true; btn.textContent = 'Enviando…';
+  // Paso 5 → si fue negativa, pedimos contacto; si no, enviamos directo
+  document.getElementById('send').addEventListener('click', ()=>{
     data.comentario = document.getElementById('comentario').value.trim();
+    if(esNegativa()){ go(CONTACTO); }
+    else { enviar(document.getElementById('send')); }
+  });
+
+  // Paso de contacto
+  const cNombre = document.getElementById('cNombre');
+  const cTel = document.getElementById('cTel');
+  const cSi = document.getElementById('cSi');
+  const telOk = () => cTel.value.replace(/\D/g,'').length >= 7;
+  const validar = () => { cSi.disabled = !(cNombre.value.trim().length >= 2 && telOk()); };
+  cNombre.addEventListener('input', validar);
+  cTel.addEventListener('input', validar);
+
+  cSi.addEventListener('click', ()=>{
+    data.quiereContacto = 'Sí';
+    data.nombre = cNombre.value.trim();
+    data.telefono = cTel.value.trim();
+    const primerNombre = data.nombre.split(/\s+/)[0];
+    document.getElementById('thanksTitle').textContent = '¡Gracias, ' + primerNombre + '!';
+    document.getElementById('thanksText').innerHTML = 'Alguien del equipo te va a escribir<br>en las próximas 48 hs.';
+    enviar(cSi);
+  });
+  document.getElementById('cNo').addEventListener('click', e=>{
+    data.quiereContacto = 'No';
+    data.nombre = ''; data.telefono = '';
+    enviar(e.currentTarget);
+  });
+
+  async function enviar(btn){
+    document.querySelectorAll('#send,#cSi,#cNo').forEach(b=>b.disabled=true);
+    btn.textContent = 'Enviando…';
+    data.alerta = esNegativa() ? 'Sí' : '';
+    if(!data.alerta) data.quiereContacto = '';
     data.mesa = mesa;
     // Cuántas veces se envió la encuesta desde este celular/navegador (incluye este envío)
     let envios = 1;
@@ -247,8 +319,8 @@
       } else { console.log('Modo prueba, respuesta:', data); }
       try{ localStorage.setItem('picania_envios', String(envios)); }catch(_){}
     }catch(err){ console.warn(err); }
-    go(5);
-  });
+    go(THANKS);
+  }
 
   bars[0].classList.add('on');
 </script>
